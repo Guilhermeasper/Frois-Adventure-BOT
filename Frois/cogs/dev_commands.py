@@ -1,9 +1,9 @@
 import sqlite3
 
 from discord.ext import commands
-from Frois.game import game
+from game.game import Game
 
-mapa = game.Game()
+mapa = Game()
 
 
 class Desenvolvedor(commands.Cog):
