@@ -100,6 +100,21 @@ class Gerenciamento(commands.Cog):
                 itens_string += item[1] + "\n"
             await ctx.channel.send("```" + itens_string + "```")
 
+    @commands.command(name='conquistas', help='Mostra os itens do seu personagem.')
+    async def conquistas(self, ctx):
+        player_id = str(ctx.author.id)
+        personagem_id = self.db.procurar_player_id(player_id)
+        if personagem_id is None:
+            await ctx.channel.send(ctx.author.name + " use o comando $começar primeiro")
+        else:
+            conquistas = self.db.get_conquistas(player_id)
+            conquistas_string = ""
+            for conquista in conquistas:
+                if conquista[2] == 0:
+                    conquistas_string += conquista[1] + ": Bloqueada\n"
+                else:
+                    conquistas_string += conquista[1] + ": Desbloqueada\n"
+            await ctx.channel.send("```" + conquistas_string + "```")
 
 def setup(bot):
     db = Banco()

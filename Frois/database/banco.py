@@ -161,3 +161,10 @@ class Banco():
     def get_battle_mode(self, player_id):
         self.c.execute('SELECT valor FROM status WHERE player_id=?', (player_id,))
         return self.c.fetchone()
+
+    def get_conquistas(self, player_id):
+        self.c.execute('SELECT * FROM conquistas WHERE player_id=?', (player_id,))
+        return self.c.fetchall()
+
+    def atualizar_conquista(self, nome, player_id):
+        self.c.execute('UPDATE conquistas SET valor=? WHERE nome=? AND player_id=?', (1, nome, player_id,))

@@ -154,6 +154,12 @@ class Movimentos(commands.Cog):
                     item_id = int(str(sec) + str(pos_x) + str(pos_y))
                     self.db.inserir_item(item_id, "Chave", 1, 0, player_id)
                     await ctx.channel.send(player_name + " você encontrou uma chave no baú, ela foi adicionada ao seu inventário")
+                    await ctx.channel.send(
+                        player_name + " você desbloqueou a conquista: Caçador de tesouros")
+                    self.db.atualizar_conquista("Caçador de Tesouros", player_id)
+                    await ctx.channel.send(
+                        player_name + " você desbloqueou a conquista: Chaveiro")
+                    self.db.atualizar_conquista("Chaveiro", player_id)
                 else:
                     await ctx.channel.send(player_name + " o baú está vazio.")
             elif north == 2 or south == 2 or east == 2 or west == 2:
