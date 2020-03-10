@@ -1,113 +1,197 @@
 import sqlite3
 from discord.ext import commands
 from game.game import Game
+from database.banco import Banco
 
 mapa = Game()
 
 
 class Movimentos(commands.Cog):
-    def __init__(self, bot, conn, c):
+    def __init__(self, bot, db):
         self.bot = bot
-        self.c = c
-        self.conn = conn
+        self.db = db
 
     @commands.command(name='frente', aliases=['ahead', 'cima'],
                       help='Move seu personagem para frente, caso não o caminho não esteja bloqueado.')
     async def frente(self, ctx):
-        self.c.execute('SELECT pos_x, pos_y, sec FROM players WHERE id=?', (ctx.author.id,))
-        found = self.c.fetchone()
-        if mapa.get_section(found[2])[found[0] - 1][found[1]] == 0:
-            self.c.execute('UPDATE players SET pos_x=? WHERE id=?', (found[0] - 1, ctx.author.id))
-            self.conn.commit()
-            await ctx.channel.send('Você se movimentou para frente e não tem nada aqui')
-        elif mapa.get_section(found[2])[found[0] - 1][found[1]] == 2:
-            await ctx.channel.send('Você encontrou uma porta, está trancada, use o comando abrir caso tenha uma chave')
-        elif mapa.get_section(found[2])[found[0] - 1][found[1]] == 3:
-            self.c.execute('UPDATE players SET pos_x=? WHERE id=?', (found[0] - 1, ctx.author.id))
-            self.conn.commit()
-            await ctx.channel.send('Você se movimentou e encontrou um baú')
-            await ctx.channel.send('Utilize o comando $abrir sempre que encontrar um baú')
+        player_id = str(ctx.author.id)
+        pos_personagem = self.db.posicao_player_id(player_id)
+        if pos_personagem is None:
+            await ctx.channel.send(ctx.author.name + " use o comando $começar primeiro")
         else:
-            await ctx.channel.send('O caminho está bloqueado')
+            battle_mode = self.db.get_battle_mode(player_id)[0]
+            print("Battle mode: " + str(battle_mode))
+            if battle_mode == 1:
+                await ctx.channel.send('Você está em batalha, você só pode $lutar ou $fugir')
+            else:
+                sec = pos_personagem[0]
+                pos_x = pos_personagem[1]
+                pos_y = pos_personagem[2]
+                prox_posicao = mapa.get_section(sec)[pos_x - 1][pos_y]
+                if prox_posicao == 0:
+                    self.db.atualizar_posicao(player_id, pos_x - 1, pos_y, sec)
+                    await ctx.channel.send('Você se movimentou para frente e não tem nada aqui')
+                elif prox_posicao == 2:
+                    await ctx.channel.send('Você encontrou uma porta, está trancada, use o comando abrir caso tenha uma chave')
+                elif prox_posicao == 3:
+                    self.db.atualizar_posicao(player_id, pos_x - 1, pos_y, sec)
+                    await ctx.channel.send('Você se movimentou e encontrou um baú')
+                    await ctx.channel.send('Utilize o comando $abrir sempre que encontrar um baú')
+                else:
+                    await ctx.channel.send('O caminho está bloqueado')
 
     @commands.command(name='tras', aliases=['behind', 'baixo'],
                       help='Move seu personagem para trás, caso não o caminho não esteja bloqueado.')
     async def tras(self, ctx):
-        self.c.execute('SELECT pos_x, pos_y, sec FROM players WHERE id=?', (ctx.author.id,))
-        found = self.c.fetchone()
-        if found is None:
+        player_id = str(ctx.author.id)
+        pos_personagem = self.db.posicao_player_id(player_id)
+        if pos_personagem is None:
             await ctx.channel.send(ctx.author.name + " use o comando $começar primeiro")
         else:
-            if mapa.get_section(found[2])[found[0] + 1][found[1]] == 0:
-                self.c.execute('UPDATE players SET pos_x=? WHERE id=?', (found[0] + 1, ctx.author.id))
-                self.conn.commit()
-                await ctx.channel.send('Você se movimentou para trás e não tem nada aqui')
-            elif mapa.get_section(found[2])[found[0] + 1][found[1]] == 3:
-                self.c.execute('UPDATE players SET pos_x=? WHERE id=?', (found[0] + 1, ctx.author.id))
-                self.conn.commit()
-                await ctx.channel.send('Você se movimentou para trás e encontrou um baú')
+            battle_mode = self.db.get_battle_mode(player_id)[0]
+            if battle_mode == 1:
+                await ctx.channel.send('Você está em batalha, você só pode $lutar ou $fugir')
             else:
-                await ctx.channel.send('O caminho está bloqueado')
+                sec = pos_personagem[0]
+                pos_x = pos_personagem[1]
+                pos_y = pos_personagem[2]
+                prox_posicao = mapa.get_section(sec)[pos_x + 1][pos_y]
+                if prox_posicao == 0:
+                    self.db.atualizar_posicao(player_id, pos_x + 1, pos_y, sec)
+                    await ctx.channel.send('Você se movimentou para frente e não tem nada aqui')
+                elif prox_posicao == 2:
+                    await ctx.channel.send(
+                        'Você encontrou uma porta, está trancada, use o comando abrir caso tenha uma chave')
+                elif prox_posicao == 3:
+                    self.db.atualizar_posicao(player_id, pos_x + 1, pos_y, sec)
+                    await ctx.channel.send('Você se movimentou e encontrou um baú')
+                    await ctx.channel.send('Utilize o comando $abrir sempre que encontrar um baú')
+                else:
+                    await ctx.channel.send('O caminho está bloqueado')
+
 
     @commands.command(name='esquerda', aliases=['left', 'pt'],
                       help='Move seu personagem para esquerda, caso não o caminho não esteja bloqueado.')
     async def esquerda(self, ctx):
-        self.c.execute('SELECT pos_x, pos_y, sec FROM players WHERE id=?', (ctx.author.id,))
-        found = self.c.fetchone()
-        if found is None:
+        player_id = str(ctx.author.id)
+        pos_personagem = self.db.posicao_player_id(player_id)
+        if pos_personagem is None:
+            await ctx.channel.send("Você ainda não possui um personagem")
             await ctx.channel.send(ctx.author.name + " use o comando $começar primeiro")
         else:
-            if mapa.get_section(found[2])[found[0]][found[1] - 1] == 0:
-                self.c.execute('UPDATE players SET pos_y=? WHERE id=?', (found[1] - 1, ctx.author.id))
-                self.conn.commit()
-                await ctx.channel.send('Você se movimentou para esquerda e não tem nada aqui')
-            elif mapa.get_section(found[2])[found[0]][found[1] - 1] == 3:
-                self.c.execute('UPDATE players SET pos_y=? WHERE id=?', (found[1] - 1, ctx.author.id))
-                self.conn.commit()
-                await ctx.channel.send('Você se movimentou para esquerda e encontrou um baú')
+            battle_mode = self.db.get_battle_mode(player_id)[0]
+            if battle_mode == 1:
+                await ctx.channel.send('Você está em batalha, você só pode $lutar ou $fugir')
             else:
-                await ctx.channel.send('O caminho está bloqueado')
+                sec = pos_personagem[0]
+                pos_x = pos_personagem[1]
+                pos_y = pos_personagem[2]
+                prox_posicao = mapa.get_section(sec)[pos_x][pos_y - 1]
+                if prox_posicao == 0:
+                    self.db.atualizar_posicao(player_id, pos_x, pos_y - 1, sec)
+                    await ctx.channel.send('Você se movimentou para frente e não tem nada aqui')
+                elif prox_posicao == 2:
+                    await ctx.channel.send(
+                        'Você encontrou uma porta, está trancada, use o comando abrir caso tenha uma chave')
+                elif prox_posicao == 3:
+                    self.db.atualizar_posicao(player_id, pos_x, pos_y - 1, sec)
+                    await ctx.channel.send('Você se movimentou e encontrou um baú')
+                    await ctx.channel.send('Utilize o comando $abrir sempre que encontrar um baú')
+                else:
+                    await ctx.channel.send('O caminho está bloqueado')
 
     @commands.command(name='direita', aliases=['right'],
                       help='Move seu personagem para direita, caso não o caminho não esteja bloqueado.')
     async def direita(self, ctx):
-        self.c.execute('SELECT pos_x, pos_y, sec FROM players WHERE id=?', (ctx.author.id,))
-        found = self.c.fetchone()
-        if found is None:
+        player_id = str(ctx.author.id)
+        pos_personagem = self.db.posicao_player_id(player_id)
+        if pos_personagem is None:
+            await ctx.channel.send("Você ainda não possui um personagem")
             await ctx.channel.send(ctx.author.name + " use o comando $começar primeiro")
         else:
-            if mapa.get_section(found[2])[found[0]][found[1] + 1] == 0:
-                self.c.execute('UPDATE players SET pos_y=? WHERE id=?', (found[1] + 1, ctx.author.id))
-                self.conn.commit()
-                await ctx.channel.send('Você se movimentou para direita e não tem nada aqui')
-            elif mapa.get_section(found[2])[found[0]][found[1] + 1] == 3:
-                self.c.execute('UPDATE players SET pos_y=? WHERE id=?', (found[1] + 1, ctx.author.id))
-                self.conn.commit()
-                await ctx.channel.send('Você se movimentou para direita e encontrou um baú')
+            battle_mode = self.db.get_battle_mode(player_id)[0]
+            print("Battle mode: " + str(battle_mode))
+            if battle_mode == 1:
+                await ctx.channel.send('Você está em batalha, você só pode $lutar ou $fugir')
             else:
-                await ctx.channel.send('O caminho está bloqueado')
+                sec = pos_personagem[0]
+                pos_x = pos_personagem[1]
+                pos_y = pos_personagem[2]
+                prox_posicao = mapa.get_section(sec)[pos_x][pos_y + 1]
+                if prox_posicao == 0:
+                    self.db.atualizar_posicao(player_id, pos_x, pos_y + 1, sec)
+                    await ctx.channel.send('Você se movimentou para frente e não tem nada aqui')
+                elif prox_posicao == 2:
+                    await ctx.channel.send(
+                        'Você encontrou uma porta, está trancada, use o comando abrir caso tenha uma chave')
+                elif prox_posicao == 3:
+                    self.db.atualizar_posicao(player_id, pos_x, pos_y + 1, sec)
+                    await ctx.channel.send('Você se movimentou e encontrou um baú')
+                    await ctx.channel.send('Utilize o comando $abrir sempre que encontrar um baú')
+                else:
+                    await ctx.channel.send('O caminho está bloqueado')
 
     @commands.command(name='abrir', help='Abre baús, portas e tudo mais que possa ser aberto')
     async def abrir(self, ctx):
-        self.c.execute('SELECT pos_x, pos_y, bag FROM players WHERE id=?', (ctx.author.id,))
-        found = self.c.fetchone()
-        if mapa.get_section(1)[found[0]][found[1]] == 3:
-            self.c.execute('UPDATE players SET bag=? WHERE id=?', (found[2] + "Chave,", ctx.author.id))
-            self.conn.commit()
-            await ctx.channel.send("Você encontrou uma chave no baú, ela foi adicionada ao seu inventário")
-        elif mapa.get_section(1)[found[0] - 1][found[1]] == 2:
-            self.c.execute('SELECT bag FROM players WHERE id=?', (ctx.author.id,))
-            bag = self.c.fetchone()
-            print(bag)
-            if bag[0].split(",")[0] == "Chave":
-                self.c.execute('UPDATE players SET pos_x=? WHERE id=?', (found[0] - 2, ctx.author.id))
-                self.conn.commit()
-                await ctx.channel.send('Você abriu a porta e não parece ter nada aqui')
-            else:
-                await ctx.channel.send('Você precisa de uma chave pra abrir a porta, procure o baú')
+        player_name = ctx.author.name
+        player_id = str(ctx.author.id)
+        pos_personagem = self.db.posicao_player_id(player_id)
+        if pos_personagem is None:
+            await ctx.channel.send(player_name + " você ainda não possui um personagem.")
+            await ctx.channel.send("Use o comando $começar primeiro")
+        else:
+            sec = pos_personagem[0]
+            pos_x = pos_personagem[1]
+            pos_y = pos_personagem[2]
+            posicao = mapa.get_section(sec)[pos_x][pos_y]
+            north = mapa.get_section(sec)[pos_x - 1][pos_y]
+            south = mapa.get_section(sec)[pos_x + 1][pos_y]
+            east = mapa.get_section(sec)[pos_x][pos_y - 1]
+            west = mapa.get_section(sec)[pos_x][pos_y + 1]
+            item = self.db.procurar_item_nome("Chave", player_id)
+            if posicao == 3:
+                if item is None:
+                    item_id = int(str(sec) + str(pos_x) + str(pos_y))
+                    self.db.inserir_item(item_id, "Chave", 1, 0, player_id)
+                    await ctx.channel.send(player_name + " você encontrou uma chave no baú, ela foi adicionada ao seu inventário")
+                else:
+                    await ctx.channel.send(player_name + " o baú está vazio.")
+            elif north == 2 or south == 2 or east == 2 or west == 2:
+                if item is None:
+                    await ctx.channel.send(player_name + ' você precisa de uma chave pra abrir a porta, procure o baú.')
+                elif item[1] == "Chave":
+                    self.db.set_battle_mode(1, player_id)
+                    self.db.remover_item(item[0], player_id)
+                    await ctx.channel.send(player_name + ' você abriu a porta e havia um monstro a sua espera.')
+                    await ctx.channel.send('Você iniciou uma batalha com o monstro, você pode $lutar ou $fugir.')
 
+    @commands.command(name='lutar', help='Luta com monstros')
+    async def lutar(self, ctx):
+        player_name = ctx.author.name
+        player_id = str(ctx.author.id)
+        pos_personagem = self.db.posicao_player_id(player_id)
+        if pos_personagem is None:
+            await ctx.channel.send(player_name + " você ainda não possui um personagem.")
+            await ctx.channel.send("Use o comando $começar primeiro")
+        else:
+            await ctx.channel.send(player_name + " você não possui nenhuma arma.")
+            await ctx.channel.send("Você tentou lutar com as próprias mãos e o monstro te matou")
+            self.db.atualizar_posicao(player_id, 16, 14, 1)
+            self.db.set_battle_mode(0, player_id)
+
+    @commands.command(name='fugir', help='Luta com monstros')
+    async def fugir(self, ctx):
+        player_name = ctx.author.name
+        player_id = str(ctx.author.id)
+        pos_personagem = self.db.posicao_player_id(player_id)
+        if pos_personagem is None:
+            await ctx.channel.send(player_name + " você ainda não possui um personagem.")
+            await ctx.channel.send("Use o comando $começar primeiro")
+        else:
+            await ctx.channel.send("Você tentou fugir e o monstro te matou")
+            self.db.atualizar_posicao(player_id, 16, 14, 1)
+            self.db.set_battle_mode(0, player_id)
 
 def setup(bot):
-    conn = sqlite3.connect('players.db')
-    c = conn.cursor()
-    bot.add_cog(Movimentos(bot, conn, c))
+    banco = Banco()
+    bot.add_cog(Movimentos(bot, banco))

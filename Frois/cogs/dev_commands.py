@@ -7,15 +7,16 @@ mapa = Game()
 
 
 class Desenvolvedor(commands.Cog):
-    def __init__(self, bot, banco):
+    def __init__(self, bot, db):
         self.bot = bot
-        self.banco = banco
+        self.db = db
 
     @commands.command(name='zerar', help='Retorna o personagem ao ponto inicial do jogo')
     async def reset(self, ctx):
-        if ctx.author.id == 214257187592077313 or ctx.author.id == 305838877866721280:
+        player_id = str(ctx.author.id)
+        if player_id == "214257187592077313" or player_id == "305838877866721280":
             avatar = ctx.message.content.replace("$zerar ", "")
-            personagem = self.banco.procurar_personagem(avatar)
+            personagem = self.db.procurar_personagem(avatar)
             if personagem is None:
                 await ctx.channel.send("Não existe nenhum personagem com o nick informado")
             else:
@@ -25,9 +26,10 @@ class Desenvolvedor(commands.Cog):
 
     @commands.command(name='limpar', help='Limpa o inventário do personagem')
     async def limpar(self, ctx):
-        if ctx.author.id == 214257187592077313 or ctx.author.id == 305838877866721280:
+        player_id = str(ctx.author.id)
+        if player_id == "214257187592077313" or player_id == "305838877866721280":
             avatar = ctx.message.content.replace("$limpar ", "")
-            personagem = self.banco.procurar_personagem(avatar)
+            personagem = self.db.procurar_personagem(avatar)
             if personagem is None:
                 await ctx.channel.send("Não existe nenhum personagem com o avatar informado")
             else:
@@ -37,10 +39,10 @@ class Desenvolvedor(commands.Cog):
 
     @commands.command(name='mapa', help='Mostra o mapa do personagem')
     async def map(self, ctx):
-        if ctx.author.id == 214257187592077313 or ctx.author.id == 305838877866721280 or \
-                ctx.author.id == 164786521180733440:
+        player_id = str(ctx.author.id)
+        if player_id == "214257187592077313" or player_id == "305838877866721280":
             avatar = ctx.message.content.replace("$mapa ", "")
-            personagem = self.banco.procurar_personagem(avatar)
+            personagem = self.db.procurar_personagem(avatar)
             mapaprint = ""
             if personagem is None:
                 await ctx.channel.send("O personagem informado ainda não foi criado")
@@ -52,19 +54,20 @@ class Desenvolvedor(commands.Cog):
                         else:
                             mapaprint += str(mapa.get_section(personagem[5])[i][j]) + " "
                     mapaprint += "\n"
-                await ctx.channel.send("```" + mapaprint + "```", delete_after=50)
+                await ctx.channel.send("```" + mapaprint + "```", delete_after=5)
         else:
             await ctx.channel.send("```Junte-se ao time de desenvolvimento para desbloquear esse comando```")
 
     @commands.command(name='remover', help='Remove todas as informações do personagem')
     async def remover(self, ctx):
-        if ctx.author.id == 214257187592077313 or ctx.author.id == 305838877866721280:
+        player_id = str(ctx.author.id)
+        if player_id == "214257187592077313" or player_id == "305838877866721280":
             avatar = ctx.message.content.replace("$remover ", "")
-            personagem = self.banco.procurar_personagem(avatar)
+            personagem = self.db.procurar_personagem(avatar)
             if personagem is None:
                 await ctx.channel.send("O personagem informado ainda não foi criado")
             else:
-                self.banco.remover_personagem(avatar)
+                self.db.remover_personagem(avatar)
                 await ctx.channel.send("O personagem " + personagem[2] + " foi removido do jogo")
 
 
