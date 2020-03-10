@@ -5,7 +5,6 @@ from database.banco import Banco
 
 mapa = Game()
 
-
 class Movimentos(commands.Cog):
     def __init__(self, bot, db):
         self.bot = bot
@@ -15,6 +14,7 @@ class Movimentos(commands.Cog):
                       help='Move seu personagem para frente, caso não o caminho não esteja bloqueado.')
     async def frente(self, ctx):
         player_id = str(ctx.author.id)
+        move_type = "frente"
         pos_personagem = self.db.posicao_player_id(player_id)
         if pos_personagem is None:
             await ctx.channel.send(ctx.author.name + " use o comando $começar primeiro")
@@ -28,6 +28,7 @@ class Movimentos(commands.Cog):
                 pos_x = pos_personagem[1]
                 pos_y = pos_personagem[2]
                 prox_posicao = mapa.get_section(sec)[pos_x - 1][pos_y]
+                pos_id = int(str(sec)+str(pos_x - 1)+str(pos_y))
                 if prox_posicao == 0:
                     self.db.atualizar_posicao(player_id, pos_x - 1, pos_y, sec)
                     await ctx.channel.send('Você se movimentou para frente e não tem nada aqui')
@@ -40,10 +41,11 @@ class Movimentos(commands.Cog):
                 else:
                     await ctx.channel.send('O caminho está bloqueado')
 
-    @commands.command(name='tras', aliases=['behind', 'baixo'],
+    @commands.command(name='tras', aliases=['behind', 'baixo', 'trás'],
                       help='Move seu personagem para trás, caso não o caminho não esteja bloqueado.')
     async def tras(self, ctx):
         player_id = str(ctx.author.id)
+        move_type = "trás"
         pos_personagem = self.db.posicao_player_id(player_id)
         if pos_personagem is None:
             await ctx.channel.send(ctx.author.name + " use o comando $começar primeiro")
@@ -56,9 +58,10 @@ class Movimentos(commands.Cog):
                 pos_x = pos_personagem[1]
                 pos_y = pos_personagem[2]
                 prox_posicao = mapa.get_section(sec)[pos_x + 1][pos_y]
+                pos_id = int(str(sec) + str(pos_x + 1) + str(pos_y))
                 if prox_posicao == 0:
                     self.db.atualizar_posicao(player_id, pos_x + 1, pos_y, sec)
-                    await ctx.channel.send('Você se movimentou para frente e não tem nada aqui')
+                    await ctx.channel.send('Você se movimentou para trás e não tem nada aqui')
                 elif prox_posicao == 2:
                     await ctx.channel.send(
                         'Você encontrou uma porta, está trancada, use o comando abrir caso tenha uma chave')
@@ -74,6 +77,7 @@ class Movimentos(commands.Cog):
                       help='Move seu personagem para esquerda, caso não o caminho não esteja bloqueado.')
     async def esquerda(self, ctx):
         player_id = str(ctx.author.id)
+        move_type = "esquerda"
         pos_personagem = self.db.posicao_player_id(player_id)
         if pos_personagem is None:
             await ctx.channel.send("Você ainda não possui um personagem")
@@ -87,6 +91,7 @@ class Movimentos(commands.Cog):
                 pos_x = pos_personagem[1]
                 pos_y = pos_personagem[2]
                 prox_posicao = mapa.get_section(sec)[pos_x][pos_y - 1]
+                pos_id = int(str(sec) + str(pos_x) + str(pos_y - 1))
                 if prox_posicao == 0:
                     self.db.atualizar_posicao(player_id, pos_x, pos_y - 1, sec)
                     await ctx.channel.send('Você se movimentou para frente e não tem nada aqui')
@@ -104,6 +109,7 @@ class Movimentos(commands.Cog):
                       help='Move seu personagem para direita, caso não o caminho não esteja bloqueado.')
     async def direita(self, ctx):
         player_id = str(ctx.author.id)
+        move_type = "direita"
         pos_personagem = self.db.posicao_player_id(player_id)
         if pos_personagem is None:
             await ctx.channel.send("Você ainda não possui um personagem")
@@ -118,6 +124,7 @@ class Movimentos(commands.Cog):
                 pos_x = pos_personagem[1]
                 pos_y = pos_personagem[2]
                 prox_posicao = mapa.get_section(sec)[pos_x][pos_y + 1]
+                pos_id = int(str(sec) + str(pos_x) + str(pos_y + 1))
                 if prox_posicao == 0:
                     self.db.atualizar_posicao(player_id, pos_x, pos_y + 1, sec)
                     await ctx.channel.send('Você se movimentou para frente e não tem nada aqui')
@@ -185,7 +192,7 @@ class Movimentos(commands.Cog):
             self.db.atualizar_posicao(player_id, 16, 14, 1)
             self.db.set_battle_mode(0, player_id)
 
-    @commands.command(name='fugir', help='Luta com monstros')
+    @commands.command(name='fugir', help='Foge de monstros')
     async def fugir(self, ctx):
         player_name = ctx.author.name
         player_id = str(ctx.author.id)
@@ -197,6 +204,10 @@ class Movimentos(commands.Cog):
             await ctx.channel.send("Você tentou fugir e o monstro te matou")
             self.db.atualizar_posicao(player_id, 16, 14, 1)
             self.db.set_battle_mode(0, player_id)
+
+    async def mover(self, direcao, prox_posicao, pos_x, pos_y, sec, player_id):
+        if prox_posicao == 0:
+
 
 def setup(bot):
     banco = Banco()

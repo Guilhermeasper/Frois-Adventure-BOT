@@ -148,15 +148,23 @@ class Banco():
 
     def remover_item(self, item_id, player_id):
         self.c.execute('DELETE FROM itens WHERE id=? AND player_id=?', (item_id, player_id,))
+        self.salvar()
+
+    def limpar_itens(self, player_id):
+        self.c.execute('DELETE FROM itens WHERE player_id=?', (player_id,))
+        self.salvar()
 
     def atualizar_atributo_max(self, atributo_id, player_id, valor):
         self.c.execute('UPDATE atributos SET valor_max=? WHERE id=? AND player_id=?', (valor, atributo_id, player_id,))
+        self.salvar()
 
     def atualizar_atributo_atual(self, atributo_id, player_id, valor):
         self.c.execute('UPDATE atributos SET valor_atual=? WHERE id=? AND player_id=?', (valor, atributo_id, player_id,))
+        self.salvar()
 
     def set_battle_mode(self, mode, player_id):
         self.c.execute('UPDATE status SET valor=? WHERE player_id=?', (mode, player_id,))
+        self.salvar()
 
     def get_battle_mode(self, player_id):
         self.c.execute('SELECT valor FROM status WHERE player_id=?', (player_id,))
@@ -168,3 +176,13 @@ class Banco():
 
     def atualizar_conquista(self, nome, player_id):
         self.c.execute('UPDATE conquistas SET valor=? WHERE nome=? AND player_id=?', (1, nome, player_id,))
+        self.salvar()
+
+    def hard_reset(self):
+        self.c.execute("DROP TABLE players")
+        self.c.execute("DROP TABLE atributos")
+        self.c.execute("DROP TABLE status")
+        self.c.execute("DROP TABLE itens")
+        self.c.execute("DROP TABLE conquistas")
+        self.salvar()
+        self.iniciar()

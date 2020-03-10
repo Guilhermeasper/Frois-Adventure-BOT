@@ -110,6 +110,7 @@ class Gerenciamento(commands.Cog):
             conquistas = self.db.get_conquistas(player_id)
             conquistas_string = ""
             for conquista in conquistas:
+                print(conquista)
                 if conquista[2] == 0:
                     conquistas_string += conquista[1] + ": Bloqueada\n"
                 else:
