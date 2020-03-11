@@ -19,27 +19,13 @@ class Movimentos(commands.Cog):
         if pos_personagem is None:
             await ctx.channel.send(ctx.author.name + " use o comando $começar primeiro")
         else:
+            personagem = self.db.get_personagem_by_id(player_id)[0]
+            sec = pos_personagem[0]
+            pos_x = pos_personagem[1]
+            pos_y = pos_personagem[2]
+            prox_posicao = mapa.get_section(sec)[pos_x - 1][pos_y]
             battle_mode = self.db.get_battle_mode(player_id)[0]
-            print("Battle mode: " + str(battle_mode))
-            if battle_mode == 1:
-                await ctx.channel.send('Você está em batalha, você só pode $lutar ou $fugir')
-            else:
-                sec = pos_personagem[0]
-                pos_x = pos_personagem[1]
-                pos_y = pos_personagem[2]
-                prox_posicao = mapa.get_section(sec)[pos_x - 1][pos_y]
-                pos_id = int(str(sec)+str(pos_x - 1)+str(pos_y))
-                if prox_posicao == 0:
-                    self.db.atualizar_posicao(player_id, pos_x - 1, pos_y, sec)
-                    await ctx.channel.send('Você se movimentou para frente e não tem nada aqui')
-                elif prox_posicao == 2:
-                    await ctx.channel.send('Você encontrou uma porta, está trancada, use o comando abrir caso tenha uma chave')
-                elif prox_posicao == 3:
-                    self.db.atualizar_posicao(player_id, pos_x - 1, pos_y, sec)
-                    await ctx.channel.send('Você se movimentou e encontrou um baú')
-                    await ctx.channel.send('Utilize o comando $abrir sempre que encontrar um baú')
-                else:
-                    await ctx.channel.send('O caminho está bloqueado')
+            await self.mover(ctx, battle_mode, move_type, prox_posicao, pos_x - 1, pos_y, sec, player_id, personagem)
 
     @commands.command(name='tras', aliases=['behind', 'baixo', 'trás'],
                       help='Move seu personagem para trás, caso não o caminho não esteja bloqueado.')
@@ -50,27 +36,13 @@ class Movimentos(commands.Cog):
         if pos_personagem is None:
             await ctx.channel.send(ctx.author.name + " use o comando $começar primeiro")
         else:
+            personagem = self.db.get_personagem_by_id(player_id)[0]
+            sec = pos_personagem[0]
+            pos_x = pos_personagem[1]
+            pos_y = pos_personagem[2]
+            prox_posicao = mapa.get_section(sec)[pos_x + 1][pos_y]
             battle_mode = self.db.get_battle_mode(player_id)[0]
-            if battle_mode == 1:
-                await ctx.channel.send('Você está em batalha, você só pode $lutar ou $fugir')
-            else:
-                sec = pos_personagem[0]
-                pos_x = pos_personagem[1]
-                pos_y = pos_personagem[2]
-                prox_posicao = mapa.get_section(sec)[pos_x + 1][pos_y]
-                pos_id = int(str(sec) + str(pos_x + 1) + str(pos_y))
-                if prox_posicao == 0:
-                    self.db.atualizar_posicao(player_id, pos_x + 1, pos_y, sec)
-                    await ctx.channel.send('Você se movimentou para trás e não tem nada aqui')
-                elif prox_posicao == 2:
-                    await ctx.channel.send(
-                        'Você encontrou uma porta, está trancada, use o comando abrir caso tenha uma chave')
-                elif prox_posicao == 3:
-                    self.db.atualizar_posicao(player_id, pos_x + 1, pos_y, sec)
-                    await ctx.channel.send('Você se movimentou e encontrou um baú')
-                    await ctx.channel.send('Utilize o comando $abrir sempre que encontrar um baú')
-                else:
-                    await ctx.channel.send('O caminho está bloqueado')
+            await self.mover(ctx, battle_mode, move_type, prox_posicao, pos_x + 1, pos_y, sec, player_id, personagem)
 
 
     @commands.command(name='esquerda', aliases=['left', 'pt'],
@@ -83,27 +55,13 @@ class Movimentos(commands.Cog):
             await ctx.channel.send("Você ainda não possui um personagem")
             await ctx.channel.send(ctx.author.name + " use o comando $começar primeiro")
         else:
+            personagem = self.db.get_personagem_by_id(player_id)[0]
+            sec = pos_personagem[0]
+            pos_x = pos_personagem[1]
+            pos_y = pos_personagem[2]
+            prox_posicao = mapa.get_section(sec)[pos_x][pos_y - 1]
             battle_mode = self.db.get_battle_mode(player_id)[0]
-            if battle_mode == 1:
-                await ctx.channel.send('Você está em batalha, você só pode $lutar ou $fugir')
-            else:
-                sec = pos_personagem[0]
-                pos_x = pos_personagem[1]
-                pos_y = pos_personagem[2]
-                prox_posicao = mapa.get_section(sec)[pos_x][pos_y - 1]
-                pos_id = int(str(sec) + str(pos_x) + str(pos_y - 1))
-                if prox_posicao == 0:
-                    self.db.atualizar_posicao(player_id, pos_x, pos_y - 1, sec)
-                    await ctx.channel.send('Você se movimentou para frente e não tem nada aqui')
-                elif prox_posicao == 2:
-                    await ctx.channel.send(
-                        'Você encontrou uma porta, está trancada, use o comando abrir caso tenha uma chave')
-                elif prox_posicao == 3:
-                    self.db.atualizar_posicao(player_id, pos_x, pos_y - 1, sec)
-                    await ctx.channel.send('Você se movimentou e encontrou um baú')
-                    await ctx.channel.send('Utilize o comando $abrir sempre que encontrar um baú')
-                else:
-                    await ctx.channel.send('O caminho está bloqueado')
+            await self.mover(ctx, battle_mode, move_type, prox_posicao, pos_x, pos_y - 1, sec, player_id, personagem)
 
     @commands.command(name='direita', aliases=['right'],
                       help='Move seu personagem para direita, caso não o caminho não esteja bloqueado.')
@@ -112,31 +70,17 @@ class Movimentos(commands.Cog):
         move_type = "direita"
         pos_personagem = self.db.posicao_player_id(player_id)
         if pos_personagem is None:
-            await ctx.channel.send("Você ainda não possui um personagem")
-            await ctx.channel.send(ctx.author.name + " use o comando $começar primeiro")
+            await ctx.channel.send(ctx.author.name + " você ainda não possui um personagem.")
+            await ctx.channel.send("Use o comando $começar primeiro!")
         else:
+            personagem = self.db.get_personagem_by_id(player_id)[0]
+            sec = pos_personagem[0]
+            pos_x = pos_personagem[1]
+            pos_y = pos_personagem[2]
+            prox_posicao = mapa.get_section(sec)[pos_x][pos_y + 1]
             battle_mode = self.db.get_battle_mode(player_id)[0]
-            print("Battle mode: " + str(battle_mode))
-            if battle_mode == 1:
-                await ctx.channel.send('Você está em batalha, você só pode $lutar ou $fugir')
-            else:
-                sec = pos_personagem[0]
-                pos_x = pos_personagem[1]
-                pos_y = pos_personagem[2]
-                prox_posicao = mapa.get_section(sec)[pos_x][pos_y + 1]
-                pos_id = int(str(sec) + str(pos_x) + str(pos_y + 1))
-                if prox_posicao == 0:
-                    self.db.atualizar_posicao(player_id, pos_x, pos_y + 1, sec)
-                    await ctx.channel.send('Você se movimentou para frente e não tem nada aqui')
-                elif prox_posicao == 2:
-                    await ctx.channel.send(
-                        'Você encontrou uma porta, está trancada, use o comando abrir caso tenha uma chave')
-                elif prox_posicao == 3:
-                    self.db.atualizar_posicao(player_id, pos_x, pos_y + 1, sec)
-                    await ctx.channel.send('Você se movimentou e encontrou um baú')
-                    await ctx.channel.send('Utilize o comando $abrir sempre que encontrar um baú')
-                else:
-                    await ctx.channel.send('O caminho está bloqueado')
+            await self.mover(ctx, battle_mode, move_type, prox_posicao, pos_x, pos_y + 1, sec, player_id, personagem)
+
 
     @commands.command(name='abrir', help='Abre baús, portas e tudo mais que possa ser aberto')
     async def abrir(self, ctx):
@@ -199,14 +143,28 @@ class Movimentos(commands.Cog):
         pos_personagem = self.db.posicao_player_id(player_id)
         if pos_personagem is None:
             await ctx.channel.send(player_name + " você ainda não possui um personagem.")
-            await ctx.channel.send("Use o comando $começar primeiro")
+            await ctx.channel.send("Use o comando $começar primeiro.")
         else:
-            await ctx.channel.send("Você tentou fugir e o monstro te matou")
+            await ctx.channel.send("Você tentou fugir e o monstro te matou.")
             self.db.atualizar_posicao(player_id, 16, 14, 1)
             self.db.set_battle_mode(0, player_id)
 
-    async def mover(self, direcao, prox_posicao, pos_x, pos_y, sec, player_id):
-        if prox_posicao == 0:
+    async def mover(self, ctx, combate, direcao, prox_posicao, pos_x, pos_y, sec, player_id, avatar):
+        if combate == 1:
+            await ctx.channel.send(avatar + ' você está em combate, você só pode $lutar ou $fugir.')
+        else:
+            if prox_posicao == 0:
+                self.db.atualizar_posicao(player_id, pos_x, pos_y, sec)
+                await ctx.channel.send(avatar + ' você se movimentou para ' + direcao + ' e não tem nada aqui.')
+            elif prox_posicao == 2:
+                await ctx.channel.send(
+                    avatar + ' você encontrou uma porta, está trancada, use o comando abrir caso tenha uma chave.')
+            elif prox_posicao == 3:
+                self.db.atualizar_posicao(player_id, pos_x, pos_y, sec)
+                await ctx.channel.send(avatar + ' você se movimentou para ' + direcao + ' e encontrou um baú.')
+                await ctx.channel.send('Utilize o comando $abrir sempre que encontrar um baú.')
+            else:
+                await ctx.channel.send(avatar + ' o caminho está bloqueado.')
 
 
 def setup(bot):

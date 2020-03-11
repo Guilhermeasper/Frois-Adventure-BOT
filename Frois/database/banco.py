@@ -122,6 +122,10 @@ class Banco():
         self.c.execute('SELECT * FROM players INNER JOIN atributos a on players.id = a.player_id AND players.avatar = ?', (avatar,))
         return self.c.fetchone()
 
+    def get_personagem_by_id(self, player_id):
+        self.c.execute('SELECT avatar FROM players WHERE id=?', (player_id,))
+        return self.c.fetchone()
+
     def remover_personagem(self, avatar):
         self.c.execute('DELETE FROM players WHERE avatar=?', (avatar,))
         self.salvar()
