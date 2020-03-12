@@ -16,7 +16,11 @@ class Banco():
                                                         exp INTEGER,
                                                         sec INTEGER,
                                                         pos_x INTEGER,
-                                                        pos_y INTEGER
+                                                        pos_y INTEGER,
+                                                        classe TEXT,
+                                                        inteligencia INTEGER,
+                                                        forca INTEGER,
+                                                        destreza INTEGER
                                                         );''')
             print("Sucesso")
         except:
@@ -83,8 +87,8 @@ class Banco():
     def fechar(self):
         self.conn.close()
 
-    def iniciar_personagem(self, player_id, nome, avatar, avatar_level, exp, sec, pos_x, pos_y):
-        self.c.execute('INSERT INTO players VALUES(?,?,?,?,?,?,?,?)', (player_id, nome, avatar, avatar_level, exp, sec, pos_x, pos_y))
+    def iniciar_personagem(self, player_id, nome, avatar, avatar_level, exp, sec, pos_x, pos_y, classe, inteligencia, forca, destreza):
+        self.c.execute('INSERT INTO players VALUES(?,?,?,?,?,?,?,?,?,?,?,?)', (player_id, nome, avatar, avatar_level, exp, sec, pos_x, pos_y, classe, inteligencia, forca, destreza))
         self.c.execute('INSERT INTO atributos VALUES(?,?,?,?,?)', (None, "Vida", 10, 10, player_id))
         self.c.execute('INSERT INTO atributos VALUES(?,?,?,?,?)', (None, "Mana", 5, 5, player_id))
         self.c.execute('INSERT INTO atributos VALUES(?,?,?,?,?)', (None, "Ouro", 0, 999999, player_id))

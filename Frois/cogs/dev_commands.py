@@ -11,17 +11,21 @@ class Desenvolvedor(commands.Cog):
 
     @commands.command(name='hard_reset', help='Exclui todas as informações do jogo')
     async def hard_reset(self, ctx):
-        senha = ctx.message.content.replace("$hard_reset ", "")
-        if senha == "17051996":
-            self.db.hard_reset()
-            await ctx.message.delete()
-            await ctx.channel.send("```Todas as informações do jogo foram apagadas```")
-        elif senha == "":
-            await ctx.channel.send("```Esse comando irá apagar todas as informações do jogo\n"
-                                   "Cuidado ao utilizar o mesmo"
-                                   "Utilize $hard_reset senha```")
+        if player_id == "214257187592077313" or player_id == "305838877866721280":
+            senha = ctx.message.content.replace("$hard_reset ", "")
+            if senha == "17051996":
+                self.db.hard_reset()
+                await ctx.message.delete()
+                await ctx.channel.send("```Todas as informações do jogo foram apagadas```")
+            elif senha == "":
+                await ctx.channel.send("```Esse comando irá apagar todas as informações do jogo\n"
+                                       "Cuidado ao utilizar o mesmo"
+                                       "Utilize $hard_reset senha```")
+            else:
+                await ctx.channel.send("```Senha incorreta```")
         else:
-            await ctx.channel.send("```Senha incorreta```")
+            await ctx.channel.send("```Junte-se ao time de desenvolvimento para desbloquear esse comando```")
+
     @commands.command(name='zerar', help='Retorna o personagem ao ponto inicial do jogo')
     async def reset(self, ctx):
         player_id = str(ctx.author.id)
