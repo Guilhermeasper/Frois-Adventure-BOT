@@ -11,6 +11,7 @@ class Desenvolvedor(commands.Cog):
 
     @commands.command(name='hard_reset', help='Exclui todas as informações do jogo')
     async def hard_reset(self, ctx):
+        player_id = str(ctx.author.id)
         if player_id == "214257187592077313" or player_id == "305838877866721280":
             senha = ctx.message.content.replace("$hard_reset ", "")
             if senha == "17051996":

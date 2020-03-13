@@ -16,7 +16,27 @@ class Gerenciamento(commands.Cog):
         player_id = str(ctx.author.id)
         personagem = self.db.procurar_player_id(player_id)
         if personagem is None:
-            self.db.iniciar_personagem(player_id, ctx.author.name, "", 1, 0, 1, 16, 14)
+            data = {'id': player_id,
+                    'name': ctx.author.name,
+                    'avatar': "",
+                    'avatar_level': 1,
+                    'exp': 0,
+                    'sec': 1,
+                    'pos_x': 16,
+                    'pos_y': 14,
+                    'classe': "indefinida",
+                    'inteligencia': 0,
+                    'forca': 0,
+                    'destreza': 0,
+                    'ouro': 0,
+                    'batalhando': 0,
+                    'sangrando': 0,
+                    'envenenado': 0,
+                    'cansado': 0,
+                    'vida': 10,
+                    'mana': 5
+                    }
+            self.db.iniciar_personagem(data)
             await ctx.channel.send(
                 'Oi ' + ctx.author.name + ' seu perfil foi adicionado, agora use o comando $novo para criar o nome do seu personagem!')
         elif personagem is not None and personagem[2] == "":
@@ -43,6 +63,8 @@ class Gerenciamento(commands.Cog):
                     self.db.atualizar_avatar(player_id, avatar)
                     await ctx.channel.send(
                         ctx.author.name + ' você criou um novo personagem e o nome dele é ' + avatar)
+                    await ctx.channel.send('Agora utilize o comando $classe para escolher dentre as classes '
+                                           'disponíveis para o seu personagem.')
                 else:
                     await ctx.channel.send(ctx.author.name + ' já existe um personagem com o nome ' + avatar)
 
@@ -117,6 +139,25 @@ class Gerenciamento(commands.Cog):
                     conquistas_string += conquista[1] + ": Desbloqueada\n"
             await ctx.channel.send("```" + conquistas_string + "```")
 
+    @commands.command(name='classe', help='Seleciona a classe do seu personagem.')
+    async def classe(self, ctx):
+        player_id = str(ctx.author.id)
+        if ctx.message.content.strip() == "$classe":
+            await ctx.channel.send(ctx.author.name + " use o comando seguido do nome desejado")
+            await ctx.channel.send("Ex: $novo João das Neve")
+        else:
+            personagem_id = self.db.procurar_player_id(player_id)
+            if personagem_id is None:
+                await ctx.channel.send(ctx.author.name + " use o comando $começar primeiro")
+            elif personagem_id[2] == "":
+                await ctx.channel.send(ctx.author.name + " use o comando $novo primeiro")
+            else:
+                classe_nova = ctx.message.content.replace('$classe ', '')
+                classe_atual = self.db.get_classe_by_id(player_id)[0]
+                if classe_atual == 'indefinida':
+                    await ctx.channel.send(ctx.author.name + " seu personagem já possui classe")
+                else:
+                    pass
 def setup(bot):
     db = Banco()
     bot.add_cog(Gerenciamento(bot, db))

@@ -20,7 +20,14 @@ class Banco():
                                                         classe TEXT,
                                                         inteligencia INTEGER,
                                                         forca INTEGER,
-                                                        destreza INTEGER
+                                                        destreza INTEGER,
+                                                        ouro INTEGER,
+                                                        batalhando INTEGER,  
+                                                        sangrando INTEGER,
+                                                        envenenado INTEGER,
+                                                        cansado INTEGER,
+                                                        vida INTEGER,
+                                                        mana INTEGER
                                                         );''')
             print("Sucesso")
         except:
@@ -33,33 +40,6 @@ class Banco():
                                                         item TEXT,
                                                         quantidade INTEGER,
                                                         valor_unit INTEGER,
-                                                        player_id TEXT,
-                                                        FOREIGN KEY (player_id) REFERENCES players(id)
-                                                        );''')
-            print("Sucesso")
-        except:
-            print("Falha")
-
-        print("Tabela de atributos:", end=" ")
-        try:
-            self.c.execute(
-                '''CREATE TABLE IF NOT EXISTS atributos ( id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                                        nome TEXT,
-                                                        valor_atual INTEGER,
-                                                        valor_max INTEGER,
-                                                        player_id TEXT,
-                                                        FOREIGN KEY (player_id) REFERENCES players(id)
-                                                        );''')
-            print("Sucesso")
-        except:
-            print("Falha")
-
-        print("Tabela de status:", end=" ")
-        try:
-            self.c.execute(
-                '''CREATE TABLE IF NOT EXISTS status ( id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                                        nome TEXT,
-                                                        valor INTEGER,
                                                         player_id TEXT,
                                                         FOREIGN KEY (player_id) REFERENCES players(id)
                                                         );''')
@@ -87,15 +67,45 @@ class Banco():
     def fechar(self):
         self.conn.close()
 
-    def iniciar_personagem(self, player_id, nome, avatar, avatar_level, exp, sec, pos_x, pos_y, classe, inteligencia, forca, destreza):
-        self.c.execute('INSERT INTO players VALUES(?,?,?,?,?,?,?,?,?,?,?,?)', (player_id, nome, avatar, avatar_level, exp, sec, pos_x, pos_y, classe, inteligencia, forca, destreza))
-        self.c.execute('INSERT INTO atributos VALUES(?,?,?,?,?)', (None, "Vida", 10, 10, player_id))
-        self.c.execute('INSERT INTO atributos VALUES(?,?,?,?,?)', (None, "Mana", 5, 5, player_id))
-        self.c.execute('INSERT INTO atributos VALUES(?,?,?,?,?)', (None, "Ouro", 0, 999999, player_id))
-        self.c.execute('INSERT INTO conquistas VALUES (?, ?, ?, ?, ?)', (None, "Caçador de Tesouros", 0, 50, player_id))
-        self.c.execute('INSERT INTO conquistas VALUES (?, ?, ?, ?, ?)', (None, "Chaveiro", 0, 50, player_id))
-        self.c.execute('INSERT INTO conquistas VALUES (?, ?, ?, ?, ?)', (None, "Porteiro", 0, 50, player_id))
-        self.c.execute('INSERT INTO status VALUES (?, ?, ?, ?)', (None, "Em batalha", 0, player_id))
+    def iniciar_personagem(self, data):
+        self.c.execute('INSERT INTO players VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+                       (data['id'],
+                        data['name'],
+                        data['avatar'],
+                        data['avatar_level'],
+                        data['exp'],
+                        data['sec'],
+                        data['pos_x'],
+                        data['pos_y'],
+                        data['classe'],
+                        data['inteligencia'],
+                        data['forca'],
+                        data['destreza'],
+                        data['ouro'],
+                        data['batalhando'],
+                        data['sangrando'],
+                        data['envenenado'],
+                        data['cansado'],
+                        data['vida'],
+                        data['mana']))
+        self.c.execute('INSERT INTO conquistas VALUES (?, ?, ?, ?, ?)',
+                       (None,
+                        "Caçador de Tesouros",
+                        0,
+                        50,
+                        data['id']))
+        self.c.execute('INSERT INTO conquistas VALUES (?, ?, ?, ?, ?)',
+                       (None,
+                        "Chaveiro",
+                        0,
+                        50,
+                        data['id']))
+        self.c.execute('INSERT INTO conquistas VALUES (?, ?, ?, ?, ?)',
+                       (None,
+                        "Porteiro",
+                        0,
+                        50,
+                        data['id']))
         self.salvar()
 
     def atualizar_avatar(self, player_id, avatar):
@@ -128,6 +138,10 @@ class Banco():
 
     def get_personagem_by_id(self, player_id):
         self.c.execute('SELECT avatar FROM players WHERE id=?', (player_id,))
+        return self.c.fetchone()
+
+    def get_classe_by_id(self, player_id):
+        self.c.execute('SELECT classe FROM players WHERE id=?', (player_id,))
         return self.c.fetchone()
 
     def remover_personagem(self, avatar):
