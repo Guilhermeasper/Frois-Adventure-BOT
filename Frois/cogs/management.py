@@ -1,4 +1,3 @@
-import sqlite3
 from discord.ext import commands
 from game.game import Game
 from database.banco import Banco
@@ -21,9 +20,9 @@ class Gerenciamento(commands.Cog):
                     'avatar': "",
                     'avatar_level': 1,
                     'exp': 0,
-                    'sec': 1,
-                    'pos_x': 16,
-                    'pos_y': 14,
+                    'sec': "section_1_room",
+                    'pos_x': 3,
+                    'pos_y': 3,
                     'classe': "indefinida",
                     'inteligencia': 0,
                     'forca': 0,
@@ -143,8 +142,11 @@ class Gerenciamento(commands.Cog):
     async def classe(self, ctx):
         player_id = str(ctx.author.id)
         if ctx.message.content.strip() == "$classe":
-            await ctx.channel.send(ctx.author.name + " use o comando seguido do nome desejado")
-            await ctx.channel.send("Ex: $novo João das Neve")
+            await ctx.channel.send(ctx.author.name + " use o comando seguido da classe desejada.\n"
+                                                     "Existem 3 classes: Paladino, Mago e Ranger.\n"
+                                                     "Use o comando $info {nome da classe} para mais informações.")
+
+            await ctx.channel.send("Ex: $info paladino")
         else:
             personagem_id = self.db.procurar_player_id(player_id)
             if personagem_id is None:
@@ -152,12 +154,17 @@ class Gerenciamento(commands.Cog):
             elif personagem_id[2] == "":
                 await ctx.channel.send(ctx.author.name + " use o comando $novo primeiro")
             else:
-                classe_nova = ctx.message.content.replace('$classe ', '')
+                classe_nova = ctx.message.content.replace('$classe ', '').lower()
                 classe_atual = self.db.get_classe_by_id(player_id)[0]
-                if classe_atual == 'indefinida':
+                if classe_atual != 'indefinida':
                     await ctx.channel.send(ctx.author.name + " seu personagem já possui classe")
                 else:
+                    if classe_nova == "paladino" or classe_nova == "mago" or classe_nova == "ranger":
+                        self.db.atualizar_classe(player_id, classe_nova.capitalize())
+                        await ctx.channel.send("Parabéns "+ ctx.author.name + " seu personagem é um "  + classe_nova)
                     pass
+
+
 def setup(bot):
     db = Banco()
     bot.add_cog(Gerenciamento(bot, db))

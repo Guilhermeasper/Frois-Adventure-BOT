@@ -5,6 +5,7 @@ from database.banco import Banco
 
 mapa = Game()
 
+
 class Movimentos(commands.Cog):
     def __init__(self, bot, db):
         self.bot = bot
@@ -44,7 +45,6 @@ class Movimentos(commands.Cog):
             battle_mode = self.db.get_battle_mode(player_id)[0]
             await self.mover(ctx, battle_mode, move_type, prox_posicao, pos_x + 1, pos_y, sec, player_id, personagem)
 
-
     @commands.command(name='esquerda', aliases=['left', 'pt'],
                       help='Move seu personagem para esquerda, caso não o caminho não esteja bloqueado.')
     async def esquerda(self, ctx):
@@ -81,7 +81,6 @@ class Movimentos(commands.Cog):
             battle_mode = self.db.get_battle_mode(player_id)[0]
             await self.mover(ctx, battle_mode, move_type, prox_posicao, pos_x, pos_y + 1, sec, player_id, personagem)
 
-
     @commands.command(name='abrir', help='Abre baús, portas e tudo mais que possa ser aberto')
     async def abrir(self, ctx):
         player_name = ctx.author.name
@@ -102,9 +101,10 @@ class Movimentos(commands.Cog):
             item = self.db.procurar_item_nome("Chave", player_id)
             if posicao == 3:
                 if item is None:
-                    item_id = int(str(sec) + str(pos_x) + str(pos_y))
+                    item_id = str(str(sec) + str(pos_x) + str(pos_y))
                     self.db.inserir_item(item_id, "Chave", 1, 0, player_id)
-                    await ctx.channel.send(player_name + " você encontrou uma chave no baú, ela foi adicionada ao seu inventário")
+                    await ctx.channel.send(
+                        player_name + " você encontrou uma chave no baú, ela foi adicionada ao seu inventário")
                     await ctx.channel.send(
                         player_name + " você desbloqueou a conquista: Caçador de tesouros")
                     self.db.atualizar_conquista("Caçador de Tesouros", player_id)
@@ -117,10 +117,21 @@ class Movimentos(commands.Cog):
                 if item is None:
                     await ctx.channel.send(player_name + ' você precisa de uma chave pra abrir a porta, procure o baú.')
                 elif item[1] == "Chave":
-                    self.db.set_battle_mode(1, player_id)
-                    self.db.remover_item(item[0], player_id)
-                    await ctx.channel.send(player_name + ' você abriu a porta e havia um monstro a sua espera.')
-                    await ctx.channel.send('Você iniciou uma batalha com o monstro, você pode $lutar ou $fugir.')
+                    string_pos = sec + "_" + str(pos_x) + "_" + str(pos_y)
+                    arr_pos = mapa.get_map()[string_pos].split("_")
+                    new_pos_x = arr_pos[len(arr_pos) - 2]
+                    new_pos_y = arr_pos[len(arr_pos) - 1]
+                    new_sec = ""
+                    for index in range(len(arr_pos)-2):
+                        new_sec += arr_pos[index] + "_"
+                    new_sec = new_sec[:-1]
+                    await ctx.channel.send("Novo x: " + new_pos_x + "\nNovo y: " + new_pos_y + "\nNovo setor: " + new_sec)
+
+                    self.db.atualizar_posicao(player_id, new_pos_x, new_pos_y, new_sec)
+                    # self.db.set_battle_mode(1, player_id)
+                    # self.db.remover_item(item[0], player_id)
+                    # await ctx.channel.send(player_name + ' você abriu a porta e havia um monstro a sua espera.')
+                    # await ctx.channel.send('Você iniciou uma batalha com o monstro, você pode $lutar ou $fugir.')
 
     @commands.command(name='lutar', help='Luta com monstros')
     async def lutar(self, ctx):
@@ -133,7 +144,7 @@ class Movimentos(commands.Cog):
         else:
             await ctx.channel.send(player_name + " você não possui nenhuma arma.")
             await ctx.channel.send("Você tentou lutar com as próprias mãos e o monstro te matou")
-            self.db.atualizar_posicao(player_id, 16, 14, 1)
+            self.db.atualizar_posicao(player_id, 3, 3, 1)
             self.db.set_battle_mode(0, player_id)
 
     @commands.command(name='fugir', help='Foge de monstros')
@@ -146,7 +157,7 @@ class Movimentos(commands.Cog):
             await ctx.channel.send("Use o comando $começar primeiro.")
         else:
             await ctx.channel.send("Você tentou fugir e o monstro te matou.")
-            self.db.atualizar_posicao(player_id, 16, 14, 1)
+            self.db.atualizar_posicao(player_id, 3, 3, 1)
             self.db.set_battle_mode(0, player_id)
 
     async def mover(self, ctx, combate, direcao, prox_posicao, pos_x, pos_y, sec, player_id, avatar):
@@ -157,6 +168,7 @@ class Movimentos(commands.Cog):
                 self.db.atualizar_posicao(player_id, pos_x, pos_y, sec)
                 await ctx.channel.send(avatar + ' você se movimentou para ' + direcao + ' e não tem nada aqui.')
             elif prox_posicao == 2:
+                self.db.atualizar_posicao(player_id, pos_x, pos_y, sec)
                 await ctx.channel.send(
                     avatar + ' você encontrou uma porta, está trancada, use o comando abrir caso tenha uma chave.')
             elif prox_posicao == 3:

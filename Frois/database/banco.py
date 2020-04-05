@@ -14,7 +14,7 @@ class Banco():
                                                         avatar TEXT,
                                                         avatar_level INTEGER,
                                                         exp INTEGER,
-                                                        sec INTEGER,
+                                                        sec TEXT,
                                                         pos_x INTEGER,
                                                         pos_y INTEGER,
                                                         classe TEXT,
@@ -36,7 +36,7 @@ class Banco():
         print("Tabela de itens:", end=" ")
         try:
             self.c.execute(
-                '''CREATE TABLE IF NOT EXISTS itens ( id INTEGER PRIMARY KEY,
+                '''CREATE TABLE IF NOT EXISTS itens ( id TEXT PRIMARY KEY,
                                                         item TEXT,
                                                         quantidade INTEGER,
                                                         valor_unit INTEGER,
@@ -112,6 +112,10 @@ class Banco():
         self.c.execute('UPDATE players SET avatar=? WHERE id=?', (avatar, player_id,))
         self.salvar()
 
+    def atualizar_classe(self, player_id, classe):
+        self.c.execute('UPDATE players SET classe=? WHERE id=?', (classe, player_id,))
+        self.salvar()
+
     def atualizar_posicao(self, player_id, pos_x, pos_y, sec):
         self.c.execute('UPDATE players SET pos_x=?, pos_y=?, sec=? WHERE id=?', (pos_x, pos_y, sec, player_id,))
         self.salvar()
@@ -134,6 +138,14 @@ class Banco():
 
     def info_personagem(self, avatar):
         self.c.execute('SELECT * FROM players INNER JOIN atributos a on players.id = a.player_id AND players.avatar = ?', (avatar,))
+        return self.c.fetchone()
+
+    def get_section_by_avatar(self, avatar):
+        self.c.execute('SELECT sec FROM players WHERE avatar=?', (avatar,))
+        return self.c.fetchone()
+
+    def get_location_by_avatar(self, avatar):
+        self.c.execute('SELECT pos_x, pos_y FROM players WHERE avatar=?', (avatar,))
         return self.c.fetchone()
 
     def get_personagem_by_id(self, player_id):
@@ -185,11 +197,11 @@ class Banco():
         self.salvar()
 
     def set_battle_mode(self, mode, player_id):
-        self.c.execute('UPDATE status SET valor=? WHERE player_id=?', (mode, player_id,))
+        self.c.execute('UPDATE players SET batalhando=? WHERE id=?', (mode, player_id,))
         self.salvar()
 
     def get_battle_mode(self, player_id):
-        self.c.execute('SELECT valor FROM status WHERE player_id=?', (player_id,))
+        self.c.execute('SELECT batalhando FROM players WHERE id=?', (player_id,))
         return self.c.fetchone()
 
     def get_conquistas(self, player_id):
@@ -202,8 +214,6 @@ class Banco():
 
     def hard_reset(self):
         self.c.execute("DROP TABLE players")
-        self.c.execute("DROP TABLE atributos")
-        self.c.execute("DROP TABLE status")
         self.c.execute("DROP TABLE itens")
         self.c.execute("DROP TABLE conquistas")
         self.salvar()

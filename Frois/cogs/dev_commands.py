@@ -36,7 +36,7 @@ class Desenvolvedor(commands.Cog):
             if personagem is None:
                 await ctx.channel.send("Não existe nenhum personagem com o nick informado")
             else:
-                self.db.atualizar_posicao(player_id, 16, 14, 1)
+                self.db.atualizar_posicao(player_id, 3, 3, "section_1_room")
                 await ctx.channel.send(personagem[2] + " voltou para o ponto inicial do mapa.")
         else:
             await ctx.channel.send("```Junte-se ao time de desenvolvimento para desbloquear esse comando```")
@@ -60,19 +60,21 @@ class Desenvolvedor(commands.Cog):
         player_id = str(ctx.author.id)
         if player_id == "214257187592077313" or player_id == "305838877866721280":
             avatar = ctx.message.content.replace("$mapa ", "")
-            personagem = self.db.procurar_personagem(avatar)
+            section = self.db.get_section_by_avatar(avatar)[0]
+            location = self.db.get_location_by_avatar(avatar)
+            matriz = mapa.get_section(section)
             mapaprint = ""
-            if personagem is None:
+            if avatar is None:
                 await ctx.channel.send("O personagem informado ainda não foi criado")
             else:
-                for i in range(30):
-                    for j in range(30):
-                        if i == personagem[6] and j == personagem[7]:
+                for i in range(len(matriz)):
+                    for j in range(len(matriz[i])):
+                        if (i, j) == location:
                             mapaprint += "7 "
                         else:
-                            mapaprint += str(mapa.get_section(personagem[5])[i][j]) + " "
+                            mapaprint += str(matriz[i][j]) + " "
                     mapaprint += "\n"
-                await ctx.channel.send("```" + mapaprint + "```", delete_after=5)
+                await ctx.channel.send("```" + mapaprint + "```", delete_after=20)
         else:
             await ctx.channel.send("```Junte-se ao time de desenvolvimento para desbloquear esse comando```")
 
@@ -87,6 +89,13 @@ class Desenvolvedor(commands.Cog):
             else:
                 self.db.remover_personagem(avatar)
                 await ctx.channel.send("O personagem " + personagem[2] + " foi removido do jogo")
+
+    @commands.command(name='test', help='Comando para ser implementado com funções aleatórias para fins de desenvolvimento.')
+    async def test(self, ctx):
+        player_id = str(ctx.author.id)
+        if True:
+            avatar = ctx.message.content.replace("$test ", "")
+            await ctx.author.send("Oi "+ctx.author.name)
 
 
 def setup(bot):
